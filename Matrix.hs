@@ -2,18 +2,10 @@ module Matrix where
 
 import Data.Vector.Unboxed (Vector)
 import qualified Data.Vector.Unboxed as V
-import Data.List.Split (chunksOf)
-import Data.List(intercalate)
 
-newtype Matrix = Matrix (Vector Float)
-
-instance Show Matrix where
-  show (Matrix mat) = concat . show' 1 $ V.toList mat
-    where
-      show' n [] = []
-      show' n (x:xs)
-        | n `mod` 4 == 0 = (show x ++ "\n") : show' (n + 1) xs
-        | otherwise = (show x ++ " | ") : show' (n + 1) xs
+newtype Matrix =
+  Matrix (Vector Float)
+  deriving (Show)
 
 identity :: Matrix
 identity = Matrix . V.fromList $
