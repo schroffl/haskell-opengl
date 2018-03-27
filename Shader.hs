@@ -41,5 +41,5 @@ loadProgram name = do
   where
     makePath type' = "shaders/" ++ name ++ "." ++ shaderExtension type'
 
-withProgram :: (GLuint -> IO a) -> Program-> IO a
-withProgram f (Program pid) = f pid
+withProgram :: Program -> (GLuint -> IO a) -> IO a
+withProgram (Program pid) f = f pid
