@@ -109,7 +109,7 @@ draw win vertLength start = do
   now <- getPOSIXTime
 
   let time = fromRational . toRational $ now - start
-  let viewMat = Mat.translate 0 0 (time * 3) viewMatrix
+  let viewMat = Mat.translate (sin time * 50) (cos time * 5 + 2) (time * 3) viewMatrix
 
   Mat.unsafeWith viewMat $ glUniformMatrix4fv 1 1 GL_FALSE
   glDrawArrays GL_POINTS 0 $ fromIntegral vertLength
