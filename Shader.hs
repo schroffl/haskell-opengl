@@ -23,6 +23,7 @@ loadShader type' path = do
     with ptr' $ \ptr ->
       with (fromIntegral len) $ \lenPtr ->
         glShaderSource shader 1 ptr lenPtr
+  glCompileShader shader
   return shader
 
 loadProgram :: String -> IO Program
