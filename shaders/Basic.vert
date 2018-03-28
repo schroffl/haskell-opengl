@@ -1,8 +1,8 @@
 in vec3 position;
 
-uniform mat4 projection;
-uniform mat4 view;
-uniform mat4 model;
+layout (location = 0) uniform mat4 projection;
+layout (location = 1) uniform mat4 view;
+layout (location = 2) uniform mat4 model;
 
 out vec3 vecPosition;
 
