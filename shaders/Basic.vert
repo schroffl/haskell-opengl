@@ -1,3 +1,5 @@
+#version 430
+
 in vec3 position;
 
 layout (location = 0) uniform mat4 projection;

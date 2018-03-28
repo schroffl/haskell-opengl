@@ -1,3 +1,5 @@
+#version 430
+
 in vec3 vecPosition;
 
 out vec4 outColor;
