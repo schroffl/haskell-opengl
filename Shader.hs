@@ -31,6 +31,13 @@ getShaderLog shader = do
     glGetShaderInfoLog shader (fromIntegral len) nullPtr ptr
     peekCStringLen (ptr, len)
 
+getProgramLog :: GLuint -> IO String
+getProgramLog program = do
+  len <- getProgramIV program GL_INFO_LOG_LENGTH
+  allocaBytes len $ \ptr -> do
+    glGetProgramInfoLog program (fromIntegral len) nullPtr ptr
+    peekCStringLen (ptr, len)
+
 shaderExtension :: GLenum -> String
 shaderExtension GL_VERTEX_SHADER = "vert"
 shaderExtension GL_FRAGMENT_SHADER = "frag"
