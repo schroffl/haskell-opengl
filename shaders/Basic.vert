@@ -11,6 +11,9 @@ layout (location = 2) uniform mat4 model;
 out vec3 vecPosition;
 
 void main() {
-  vecPosition = position * vec3(1, AMPLITUDE, 1);
-  gl_Position = projection * view * model * vec4(position, 1.0);
+  vecPosition = position;
+
+  vec3 scaledPosition = position * vec3(1, AMPLITUDE, 1);
+
+  gl_Position = projection * view * model * vec4(scaledPosition, 1.0);
 }
