@@ -1,36 +1,20 @@
 module Main where
 
-import System.Random (randomIO)
-import Control.Monad (guard, unless)
-import Data.Vector.Storable (Vector)
-import qualified Data.Vector.Storable as V
-import Foreign.Marshal.Alloc (malloc)
+import Control.Monad (guard, unless, when)
 import Foreign.Ptr (nullPtr)
-import Foreign.Storable (peek, sizeOf)
 import Graphics.GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Shader
 import qualified Matrix as Mat
-import Numeric.Noise (Seed)
-import qualified Numeric.Noise.Perlin as Noise
+import qualified Chunk
 import Data.Time.Clock (NominalDiffTime)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import Data.Bits ((.|.))
 
-makeBuffer :: IO GLuint
-makeBuffer = do
-  bufPtr <- malloc
-  glGenBuffers 1 bufPtr
-  peek bufPtr
-
 onResize :: GLFW.Window -> Int -> Int -> IO ()
 onResize _ w h = do
   glViewport 0 0 (fromIntegral w) (fromIntegral h)
-
-  let aspect = fromIntegral w / fromIntegral h
-  let newProjection = Mat.perspective (pi / 2) aspect 0.01 100
-
-  Mat.unsafeWith newProjection $ glUniformMatrix4fv 0 1 GL_FALSE
+  Mat.unsafeWith (projection w h) $ glUniformMatrix4fv 0 1 GL_FALSE
 
 main :: IO ()
 main = do
@@ -49,11 +33,9 @@ main = do
 
   glViewport 0 0 (fromIntegral w) (fromIntegral h)
 
-  vertexBuffer <- makeBuffer
-
-  glBindBuffer GL_ARRAY_BUFFER vertexBuffer
-
   program <- Shader.loadProgram "Basic"
+
+  chunk <- Chunk.setup Chunk.LOD'Medium 0 0
 
   Shader.withProgram program $ \p -> do
     glUseProgram p
@@ -61,61 +43,57 @@ main = do
     glEnableVertexAttribArray 0
     glVertexAttribPointer 0 3 GL_FLOAT 0 0 nullPtr
 
-  Mat.unsafeWith projection $ glUniformMatrix4fv 0 1 GL_FALSE
+  Mat.unsafeWith (projection w h) $ glUniformMatrix4fv 0 1 GL_FALSE
   Mat.unsafeWith viewMatrix $ glUniformMatrix4fv 1 1 GL_FALSE
   Mat.unsafeWith modelMatrix $ glUniformMatrix4fv 2 1 GL_FALSE
 
-  glClearColor 0 0 0 1
+  glClearColor 0.1 0.1 0.2 1
 
-  verts <- generateVerts . (*10000) <$> randomIO
-
-  V.unsafeWith verts $ \ptr ->
-    let len = fromIntegral $ sizeOf (0 :: Float) * V.length verts
-    in glBufferData GL_ARRAY_BUFFER len ptr GL_STATIC_DRAW
-
-  draw win (V.length verts) =<< getPOSIXTime
+  draw win chunk =<< getPOSIXTime
   GLFW.terminate
 
-generateVerts :: Seed -> Vector Float
-generateVerts seed = V.fromList $ generatePlane 100 100 perlin
+projection :: Int -> Int -> Mat.Matrix
+projection w' h' = Mat.perspective (pi / 2) (w / h) 0.01 1000
   where
-    perlin = Noise.perlin seed 5 0.05 0
-
-projection :: Mat.Matrix
-projection = Mat.perspective (pi / 2) (640 / 480) 0.01 100
+    w = fromIntegral w'
+    h = fromIntegral h'
 
 viewMatrix :: Mat.Matrix
-viewMatrix = Mat.translate (-50) (-10) (-130) Mat.identity
+viewMatrix = Mat.translate 0 (-9) (-ts - 10) Mat.identity
+  where
+    ts = Chunk.chunkSize
 
 modelMatrix :: Mat.Matrix
 modelMatrix = Mat.translate 0 0 0 Mat.identity
 
-generatePlane :: Int -> Int -> Noise.Perlin -> [Float]
-generatePlane _ 0 _ = []
-generatePlane width height perlin = generateRow width height perlin ++ generatePlane width (height - 1) perlin
+isKeyDown :: GLFW.Window -> GLFW.Key -> IO Bool
+isKeyDown win key = (==GLFW.KeyState'Pressed) <$> GLFW.getKey win key
 
-generateRow :: Int -> Int -> Noise.Perlin -> [Float]
-generateRow 0 _ _ = []
-generateRow width y' perlin = [ x, height, y ] ++ generateRow (width - 1) y' perlin
-  where
-    x = fromIntegral $ width
-    y = fromIntegral $ y'
-    height = realToFrac $ Noise.noiseValue perlin (realToFrac x, realToFrac y, 0)
-
-draw :: GLFW.Window -> Int ->NominalDiffTime -> IO ()
-draw win vertLength start = do  
+draw :: GLFW.Window -> Chunk.Chunk -> NominalDiffTime -> IO ()
+draw win chunk start = do
   glClear $ GL_COLOR_BUFFER_BIT .|. GL_DEPTH_BUFFER_BIT
 
-  now <- getPOSIXTime
+  wireframe <- isKeyDown win GLFW.Key'F
+  doTranslate <- isKeyDown win GLFW.Key'Space
 
-  let time = fromRational . toRational $ now - start
-  let viewMat = Mat.translate (sin time * 50) (cos time * 5 + 2) (time * 3) viewMatrix
+  when doTranslate $ do
+    time <- realToFrac . (flip (-) start) <$> getPOSIXTime
 
-  Mat.unsafeWith viewMat $ glUniformMatrix4fv 1 1 GL_FALSE
-  glDrawArrays GL_POINTS 0 $ fromIntegral vertLength
+    let translateX = (sin time / 2 + 0.5) * (-Chunk.chunkSize)
+    let translateY = cos time * 5
+    let viewMatrix' = Mat.translate translateX translateY 0 viewMatrix
+
+    Mat.unsafeWith viewMatrix' $ glUniformMatrix4fv 1 1 GL_FALSE
+
+  if wireframe
+    then glPolygonMode GL_FRONT_AND_BACK GL_LINE
+    else glPolygonMode GL_FRONT_AND_BACK GL_FILL
+
+  Chunk.draw chunk
 
   GLFW.swapBuffers win
   GLFW.pollEvents
 
   q <- GLFW.windowShouldClose win
-  unless q $ draw win vertLength start
+  userQ <- isKeyDown win GLFW.Key'Q
+  unless (q || userQ) $ draw win chunk start
