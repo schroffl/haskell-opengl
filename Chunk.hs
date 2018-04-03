@@ -33,7 +33,7 @@ data LOD
   | LOD'Medium
   | LOD'Low
   | LOD'VeryLow
-  deriving (Show)
+  deriving (Show, Enum)
 
 withLen :: (Storable a, Num b) => Vector a -> ((Ptr a, b) -> IO c) -> IO c
 withLen vec f = V.unsafeWith vec $ \ptr -> f (ptr, len)
@@ -85,9 +85,7 @@ chunkSize = 16
 
 stepSize :: Fractional a => LOD -> a
 stepSize LOD'High = 0.5
-stepSize LOD'Medium = 2
-stepSize LOD'Low = 4
-stepSize LOD'VeryLow = 8
+stepSize lod = stepSize (pred lod) * 2
 
 stepper :: (Fractional a, Enum a) => LOD -> [a]
 stepper lod = [0, stepSize lod .. chunkSize]
