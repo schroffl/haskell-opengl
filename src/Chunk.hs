@@ -11,7 +11,7 @@ import Data.Vector.Storable (Vector)
 import qualified Data.Vector.Storable as V
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (Storable, sizeOf)
-import Numeric.Noise (Noise, noiseValue)
+import Numeric.Noise (Seed, Noise, noiseValue)
 import qualified Numeric.Noise.Perlin as Perlin
 import qualified Util
 import Graphics.GL
@@ -41,8 +41,8 @@ withLen vec f = V.unsafeWith vec $ \ptr -> f (ptr, len)
   where
     len = fromIntegral $ sizeOf (vec V.! 0) * V.length vec 
 
-setup :: LOD -> Int -> Int -> IO Chunk
-setup lod cx cz = do
+setup :: Seed -> LOD -> Int -> Int -> IO Chunk
+setup seed lod cx cz = do
   vao <- Util.makeVAO
   glBindVertexArray vao
 
@@ -67,7 +67,7 @@ setup lod cx cz = do
     , chunkIndexCount = V.length indices
     }
   where
-    noise = Perlin.perlin 35318 5 0.05 0.4
+    noise = Perlin.perlin seed 5 0.05 0.4
     flatten = foldl (\l (a, b, c) -> a : b : c : l) []
     verts = V.fromList . flatten $ vertices noise lod cx cz
     indices = V.fromList . map fromIntegral . flatten $ triangles lod

@@ -1,5 +1,6 @@
 module Main where
 
+import System.Random (randomIO)
 import Control.Monad (guard, unless, when)
 import Foreign.Ptr (nullPtr)
 import Graphics.GL
@@ -35,7 +36,8 @@ main = do
 
   program <- Shader.loadProgram "Basic"
 
-  chunk <- Chunk.setup Chunk.LOD'Medium 0 0
+  seed <- randomIO
+  chunk <- Chunk.setup seed Chunk.LOD'Medium 0 0
 
   Shader.withProgram program $ \p -> do
     glUseProgram p
