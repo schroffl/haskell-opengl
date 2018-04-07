@@ -11,7 +11,8 @@ import Data.Vector.Storable (Vector)
 import qualified Data.Vector.Storable as V
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (Storable, sizeOf)
-import qualified Numeric.Noise.Perlin as Noise
+import Numeric.Noise (Noise, noiseValue)
+import qualified Numeric.Noise.Perlin as Perlin
 import qualified Util
 import Graphics.GL
 
@@ -66,7 +67,7 @@ setup lod cx cz = do
     , chunkIndexCount = V.length indices
     }
   where
-    noise = Noise.perlin 35318 5 0.05 0.4
+    noise = Perlin.perlin 35318 5 0.05 0.4
     flatten = foldl (\l (a, b, c) -> a : b : c : l) []
     verts = V.fromList . flatten $ vertices noise lod cx cz
     indices = V.fromList . map fromIntegral . flatten $ triangles lod
@@ -90,7 +91,7 @@ stepSize lod = stepSize (pred lod) * 2
 stepper :: (Fractional a, Enum a) => LOD -> [a]
 stepper lod = [0, stepSize lod .. chunkSize]
 
-vertices :: Noise.Perlin -> LOD -> Int -> Int -> [Vertex]
+vertices :: Noise n => n -> LOD -> Int -> Int -> [Vertex]
 vertices noise lod cx cz = concat $ map f xs
   where
     f x = map (vertexAt noise x) zs
@@ -99,12 +100,12 @@ vertices noise lod cx cz = concat $ map f xs
     xs = map (+offsetX) $ stepper lod
     zs = map (+offsetZ) $ stepper lod
 
-vertexAt :: Noise.Perlin -> Float -> Float -> Vertex
+vertexAt :: Noise n => n -> Float -> Float -> Vertex
 vertexAt noise x z = (x, realToFrac height, z)
   where
     x' = realToFrac x
     z' = realToFrac z
-    height = Noise.noiseValue noise (x', 0, z')
+    height = noiseValue noise (x', 0, z')
 
 triangles :: LOD -> [Triangle]
 triangles lod = foldl (\l (a, b) -> a : b : l) [] . concat . map f $ xs
