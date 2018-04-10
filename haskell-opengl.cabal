@@ -18,3 +18,4 @@ executable haskell-opengl
                      , GLFW-b     >= 1.4.8.2  && < 2
                      , hsnoise    >= 0.0.2    && < 1
                      , time       >= 1.9.1    && < 2
+                     , random     >= 1.1      && < 2
