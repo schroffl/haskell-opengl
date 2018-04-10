@@ -1,0 +1,7 @@
+resolver: lts-11.4
+
+extra-deps:
+  - GLFW-b-1.4.8.2
+  - OpenGLRaw-3.3.0.0
+  - hsnoise-0.0.2
+  - time-1.9.1
