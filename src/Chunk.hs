@@ -95,13 +95,10 @@ stepper :: (Fractional a, Enum a) => LOD -> [a]
 stepper lod = [0, stepSize lod .. chunkSize]
 
 vertices :: Noise n => n -> LOD -> Int -> Int -> [Vertex]
-vertices noise lod cx cz = concat $ map f xs
+vertices noise lod cx cz = vertexAt noise <$> xs <*> zs
   where
-    f x = map (vertexAt noise x) zs
-    offsetX = fromIntegral $ cx * chunkSize
-    offsetZ = fromIntegral $ cz * chunkSize
-    xs = map (+offsetX) $ stepper lod
-    zs = map (+offsetZ) $ stepper lod
+    xs = map ((+) . fromIntegral $ cx * chunkSize) $ stepper lod
+    zs = map ((+) . fromIntegral $ cz * chunkSize) $ stepper lod
 
 vertexAt :: Noise n => n -> Float -> Float -> Vertex
 vertexAt noise x z = (x, realToFrac height, z)
@@ -111,9 +108,9 @@ vertexAt noise x z = (x, realToFrac height, z)
     height = noiseValue noise (x', 0, z')
 
 triangles :: LOD -> [Triangle]
-triangles lod = foldl (\l (a, b) -> a : b : l) [] . concat . map f $ xs
+triangles lod = flatten $ trianglesAt lod <$> xs <*> zs
   where
-    f x = map (trianglesAt lod x) zs
+    flatten = foldl (\l (a, b) -> a : b : l) []
     w = chunkSize / stepSize lod - 1
     xs = [0 .. w]
     zs = [0 .. w]
