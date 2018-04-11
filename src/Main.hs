@@ -42,9 +42,6 @@ main = do
   Shader.withProgram program $ \p -> do
     glUseProgram p
 
-    glEnableVertexAttribArray 0
-    glVertexAttribPointer 0 3 GL_FLOAT 0 0 nullPtr
-
   Mat.unsafeWith (projection w h) $ glUniformMatrix4fv 0 1 GL_FALSE
   Mat.unsafeWith viewMatrix $ glUniformMatrix4fv 1 1 GL_FALSE
   Mat.unsafeWith modelMatrix $ glUniformMatrix4fv 2 1 GL_FALSE
