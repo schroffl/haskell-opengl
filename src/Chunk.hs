@@ -20,8 +20,6 @@ data Chunk = Chunk
   { chunkX :: Int
   , chunkZ :: Int
   , chunkVertexArray :: GLuint
-  , chunkVertexBuffer :: GLuint
-  , chunkIndexBuffer :: GLuint
   , chunkIndexCount :: Int
   } deriving (Show)
 
@@ -58,12 +56,14 @@ setup seed lod cx cz = do
   withLen (indices :: Vector GLuint) $ \(ptr, len) ->
     glBufferData GL_ELEMENT_ARRAY_BUFFER len ptr GL_STATIC_DRAW
 
+  glBindVertexArray 0
+  glBindBuffer GL_ARRAY_BUFFER 0
+  glBindBuffer GL_ELEMENT_ARRAY_BUFFER 0
+
   return $ Chunk 
     { chunkX = cx
     , chunkZ = cz
     , chunkVertexArray = vao
-    , chunkVertexBuffer = vertexBuffer
-    , chunkIndexBuffer = indexBuffer
     , chunkIndexCount = V.length indices
     }
   where
