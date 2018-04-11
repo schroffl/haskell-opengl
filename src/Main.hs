@@ -2,7 +2,6 @@ module Main where
 
 import System.Random (randomIO)
 import Control.Monad (guard, unless, when)
-import Foreign.Ptr (nullPtr)
 import Graphics.GL
 import qualified Graphics.UI.GLFW as GLFW
 import qualified Shader
