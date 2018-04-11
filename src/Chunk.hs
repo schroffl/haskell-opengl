@@ -97,8 +97,10 @@ stepper lod = [0, stepSize lod .. chunkSize]
 vertices :: Noise n => n -> LOD -> Int -> Int -> [Vertex]
 vertices noise lod cx cz = vertexAt noise <$> xs <*> zs
   where
-    xs = map ((+) . fromIntegral $ cx * chunkSize) $ stepper lod
-    zs = map ((+) . fromIntegral $ cz * chunkSize) $ stepper lod
+    offsetX = fromIntegral $ cx * chunkSize
+    offsetZ = fromIntegral $ cz * chunkSize
+    xs = map (+offsetX) $ stepper lod
+    zs = map (+offsetZ) $ stepper lod
 
 vertexAt :: Noise n => n -> Float -> Float -> Vertex
 vertexAt noise x z = (x, realToFrac height, z)
